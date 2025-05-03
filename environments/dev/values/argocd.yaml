@@ -1,0 +1,18 @@
+global:
+  image:
+    tag: "v2.11.1"
+
+server:
+  extraArgs:
+  - --staticassets
+  - /shared/app
+  - --insecure
+  - --basehref
+  - /argocd
+  - --rootpath
+  - /argocd
+
+  env:
+  - name: ARGOCD_MAX_CONCURRENT_LOGIN_REQUESTS_COUNT
+    value: "0"
+
