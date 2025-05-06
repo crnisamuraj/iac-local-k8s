@@ -21,18 +21,3 @@ variable "cluster_nodes" {
     install_flags = list(string)
   }))
 }
-
-# variable "argo_git_url" {
-#   description = "ArgoCD gitops url"
-#   type = string
-# }
-
-# variable "argo_git_username" {
-#   description = "ArgoCD gitops username"
-#   type = string
-# }
-
-# variable "argo_git_password" {
-#   description = "ArgoCD gitops password"
-#   type = string
-# }
