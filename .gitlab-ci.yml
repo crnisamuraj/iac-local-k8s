@@ -15,14 +15,13 @@ stages:
   - cleanup
 
 variables:
-  TF_STATE_NAME: taxoman-k8s # name of the state file and gitlab environment name
-  TF_VAR_argo_git_password: $argo_git_password
+  TF_STATE_NAME: k0s # name of the state file and gitlab environment name
 
 
 default:
   before_script:
-    - echo "$TAXOMAN_K8S_ADMIN_ID_RSA" > id_rsa && chmod 400 id_rsa
-    - cp tfvars/$TF_STATE_NAME.tfvars $TF_STATE_NAME.auto.tfvars
+    - echo "$K8S_ADMIN_ID_RSA" > id_rsa && chmod 400 id_rsa
+    - cp environment/$TF_STATE_NAME/terraform.tfvars $TF_STATE_NAME.auto.tfvars
 
 fmt:
   extends: .terraform:fmt
