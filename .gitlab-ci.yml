@@ -1,0 +1,64 @@
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Terraform.gitlab-ci.yml
+
+include:
+  - template: Terraform/Base.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Terraform/Base.gitlab-ci.yml
+  # - template: Jobs/SAST-IaC.gitlab-ci.yml   # https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Jobs/SAST-IaC.gitlab-ci.yml
+
+stages:
+  - validate
+  - test
+  - build
+  - deploy
+  - cleanup
+
+variables:
+  TF_STATE_NAME: taxoman-k8s # name of the state file and gitlab environment name
+  TF_VAR_argo_git_password: $argo_git_password
+
+
+default:
+  before_script:
+    - echo "$TAXOMAN_K8S_ADMIN_ID_RSA" > id_rsa && chmod 400 id_rsa
+    - cp tfvars/$TF_STATE_NAME.tfvars $TF_STATE_NAME.auto.tfvars
+
+fmt:
+  extends: .terraform:fmt
+  needs: []
+
+validate:
+  extends: .terraform:validate
+  needs: []
+
+build:
+  extends: .terraform:build
+  environment:
+    name: $TF_STATE_NAME
+    action: prepare
+
+deploy:
+  extends: .terraform:deploy
+  dependencies:
+    - build
+  needs:
+    - build
+  environment:
+    name: $TF_STATE_NAME
+    action: start
+  artifacts:
+    paths:
+      - "*-kube.config"
+    expire_in: "30 days"
+
+cleanup:
+  extends: .terraform:destroy
+  when: manual
+  dependencies:
+    - build
+  needs:
+    - build
+  environment:
+    action: stop
+    name: $TF_STATE_NAME
