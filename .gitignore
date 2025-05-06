@@ -40,3 +40,5 @@ terraform.rc
 **kube.config
 id_rsa
 git_token
+*.pdf
+*.ignore
