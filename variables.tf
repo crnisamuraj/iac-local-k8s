@@ -16,6 +16,7 @@ variable "libvirtcluster" {
     base_volume = object({
       source = string
     })
+    root_volume_size = number
     nodes = map(object({
       role = string
       memory = number
@@ -51,6 +52,7 @@ variable "libvirtcluster" {
     base_volume = {
       source = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2" #"/home/vudu/Downloads/debian-12-generic-amd64-resized+15.qcow2"
     }
+    root_volume_size = 30000000000
     nodes = {
       ctl1 = {
         role = "controller"
@@ -97,7 +99,7 @@ variable "argocd" {
     namespace = "argocd"
     create_namespace = true
     version = "7.9.0"
-    values_path = "environments/dev/values/argocd.yaml"
+    values_path = "environments/k0s/values/argocd.yaml"
   }
   
 }

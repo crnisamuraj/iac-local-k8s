@@ -40,9 +40,27 @@ resource "libvirt_volume" "base" {
   source    = var.libvirtcluster.base_volume.source
 }
 
+# TODO: 
+# - make sure state is aware of the disk even if resize script fails
+locals {
+  # Add 4GB (4,294,967,296 bytes) to the root volume size
+  root_increased_size = var.libvirtcluster.root_volume_size + 4294967296
+  # Convert the size to GB
+  root_size_gb = "${floor(var.libvirtcluster.root_volume_size / 1000000000)}G"
+  root_increased_size_gb = "${floor(local.root_increased_size / 1000000000)}G"
+}
+
+# resource "libvirt_volume" "resized_base" {
+#   name       = "${var.libvirtcluster.name}-debian-base-resized.qcow2"
+#   pool       = libvirt_pool.this.name
+#   source     = "${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2"
+#   size = local.root_increased_size
+# }
+
+# The script `resize-disk.sh` is a custom script that resizes the disk image.
 resource "null_resource" "resize_base_image" {
   provisioner "local-exec" {
-    command = "sudo ${abspath(path.root)}/scripts/resize-disk.sh ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 40G"
+    command = "sudo ${abspath(path.root)}/scripts/resize-disk.sh ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 ${local.root_increased_size_gb} ${local.root_size_gb}"
   }
   depends_on = [ libvirt_volume.base ]
 }
