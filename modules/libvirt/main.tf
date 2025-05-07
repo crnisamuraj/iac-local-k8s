@@ -113,6 +113,6 @@ resource "libvirt_domain" "this" {
   cloudinit = libvirt_cloudinit_disk.this.id
 
   lifecycle {
-    ignore_changes = [cmdline, cpu]
+    ignore_changes = [cmdline, cpu, network_interface]
   }
 }

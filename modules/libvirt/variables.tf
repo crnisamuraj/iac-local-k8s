@@ -17,6 +17,8 @@ variable "libvirtcluster" {
       source = string
     })
     root_volume_size = number
+    vm_type = string
+    qemu_agent = bool
     nodes = map(object({
       role = string
       memory = number
@@ -46,6 +48,8 @@ variable "libvirtcluster" {
       source = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
     }
     root_volume_size = 30000000000
+    vm_type = "kvm"
+    qemu_agent = true
     nodes = {
       ctl1 = {
         role = "controller"
