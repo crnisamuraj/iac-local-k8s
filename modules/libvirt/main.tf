@@ -19,19 +19,19 @@ resource "libvirt_pool" "this" {
   }
 }
 
-data "template_file" "user_data" {
-  template = file("${path.root}/cloud-init/cloud_init.cfg")
-}
-
-data "template_file" "network_config" {
-  template = file("${path.root}/cloud-init/network_config.cfg")
+locals {
+  user_data = templatefile("${path.root}/cloud-init/cloud_init.cfg", {
+    username = var.libvirtcluster.username
+    ssh_public_key = file(pathexpand(var.libvirtcluster.ssh_public_key_path))
+  })
+  network_config = templatefile("${path.root}/cloud-init/network_config.cfg", {})
 }
 
 resource "libvirt_cloudinit_disk" "this" {
   name      = "${var.libvirtcluster.name}-commoninit"
   pool      = libvirt_pool.this.name
-  user_data = data.template_file.user_data.rendered
-  network_config = data.template_file.network_config.rendered
+  user_data = local.user_data
+  network_config = local.network_config
 }
 
 resource "libvirt_volume" "base" {
@@ -54,10 +54,30 @@ resource "libvirt_volume" "resized_base" {
   size = local.root_increased_size
 }
 
+# todo: refactor the command so that availavle elevation methods are used via script not inline and expand to macos
 # The script `resize-disk.sh` is a custom script that resizes the disk image.
 resource "null_resource" "resize_base_image" {
   provisioner "local-exec" {
-    command = "sudo ${abspath(path.root)}/scripts/resize-disk.sh ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 ${local.root_increased_size_gb} ${local.root_size_gb}"
+    command = <<-EOT
+      ${abspath(path.root)}/scripts/resize-disk.sh \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 \
+        ${local.root_increased_size_gb} \
+        ${local.root_size_gb} || \
+      echo "----------------------------------------------------------" && \
+      echo "---------- Resize disk failed, trying with sudo ----------" && \
+      echo "----------------------------------------------------------" && \
+      pkexec ${abspath(path.root)}/scripts/resize-disk.sh \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 \
+        ${local.root_increased_size_gb} \
+        ${local.root_size_gb} || \
+      sudo ${abspath(path.root)}/scripts/resize-disk.sh \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base.qcow2 \
+        ${var.libvirtcluster.volume_pool.path}/${var.libvirtcluster.name}-debian-base-resized.qcow2 \
+        ${local.root_increased_size_gb} \
+        ${local.root_size_gb}
+    EOT
   }
   depends_on = [ libvirt_volume.base, libvirt_volume.resized_base ]
 }
