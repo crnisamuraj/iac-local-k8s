@@ -10,9 +10,9 @@ include:
 stages:
   - validate
   - test
-  - build
-  - deploy
-  - cleanup
+  # - build
+  # - deploy
+  # - cleanup
 
 variables:
   TF_STATE_NAME: k0s # name of the state file and gitlab environment name
