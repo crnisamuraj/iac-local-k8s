@@ -20,7 +20,7 @@ variables:
 
 default:
   before_script:
-    - echo "$K8S_ADMIN_ID_RSA" > id_rsa && chmod 400 id_rsa
+    - ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa -C "gitlab-ci" -q
     - cp environment/$TF_STATE_NAME/terraform.tfvars $TF_STATE_NAME.auto.tfvars
 
 fmt:
